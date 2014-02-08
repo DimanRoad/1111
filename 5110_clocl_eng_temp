@@ -1,0 +1,1006 @@
+#include <Adafruit_GFX.h>
+#include <Adafruit_PCD8544.h>
+#include <Time.h>                          //adding the time-library
+float tempC;
+int tempPin = 0;
+int knoptijd = 250;                        //setting all the variables (sorry for the Dutch names)
+int uur = 12;
+int minuut = 0;
+int seconde = 0;
+int dag = 1;
+int maand = 1;
+int jaar = 2013;
+int knoplicht = 11;
+int knopmenu = 10;
+int lichtwaarde = 0;
+int menuwaarde = 0;
+float milliuur = 0;
+float milliminuut = 0;
+float milliseconde = 0;
+float millidays = 4000;
+int tijd = 0;
+int milli = 0;
+float millitijd = 0;
+int oudeseconde = 0;
+int ledpin = 9;
+int licht = LOW;
+int lichtsterkte = 30;
+int schermcontrast = 60;
+int temperatuur = 0;
+int tempsensor = 0;
+int plaatkeuze = 1;
+int tempteller = 999;
+int temppin = 2;
+//int minoud = 59;
+int kleur = BLACK;
+int kleurwis = WHITE;
+int breed = 42;
+long tussentijd = 0;
+long teller = 0;
+long tellerStart = 0;
+long tussenstand = 0;
+int breedMinWijzer[30] ={0,2,3,5,7,9,10,11,13,14,15,16,17,17,17,18,17,17,17,16,15,14,13,11,10,9,7,5,3,2};
+int hoogMinWijzer[60] ={6,6,7,7,8,9,10,11,13,14,15,17,18,20,22,24,26,28,30,31,33,34,35,37,38,39,40,41,41,42,42,42,41,41,40,39,38,37,35,34,33,31,30,28,26,24,22,20,18,17,15,14,13,11,10,9,8,7,7,6};
+int breedUurWijzer[36] ={0,6,10,12,10,6,1,7,11,12,10,5,2,8,11,12,9,4,3,9,11,11,9,3,4,9,12,11,8,2,5,10,12,11,7,1};
+int hoogUurWijzer[72] ={12,14,18,24,30,34,12,15,19,25,31,35,12,15,20,26,31,35,12,16,21,27,32,36,13,17,22,28,33,36,13,17,23,29,33,36,36,36,33,29,23,17,13,36,33,28,22,17,13,36,32,27,21,16,12,35,31,26,20,15,12,35,31,25,19,15,12,34,30,24,18,14};
+
+// pin 7 - Serial clock out (SCLK)
+// pin 6 - Serial data out (DIN)
+// pin 5 - Data/Command select (D/C)
+// pin 4 - LCD chip select (CS)
+// pin 3 - LCD reset (RST)
+Adafruit_PCD8544 display = Adafruit_PCD8544(7, 6, 5, 4, 3);
+
+#define NUMFLAKES 10
+#define XPOS 0
+#define YPOS 1
+#define DELTAY 2
+
+void setup()   {
+  Serial.begin(9600);
+  pinMode(ledpin, OUTPUT);
+  pinMode(knoplicht, INPUT);
+  pinMode(knopmenu, INPUT);
+  pinMode(temppin, OUTPUT);
+ 
+     setTime(uur,minuut,seconde,dag,maand,jaar); //setting the starttime for the clock when it starts up
+
+  display.begin();
+
+  display.setContrast(schermcontrast);
+  display.clearDisplay();   // clears the screen and buffer
+
+}
+
+
+void loop() {
+ 
+  temper();
+   menuwaarde = digitalRead(knopmenu);
+   if (menuwaarde == HIGH) menu();                    //if the [menu]button is pusched 
+  setmillidays();
+  if (plaatkeuze == 1) digitalClockDisplay();
+  if (plaatkeuze == 2) wijzerpl();
+  if (plaatkeuze == 3) stopwatch();
+  if (plaatkeuze == 4) binair();
+  if (plaatkeuze == 5) classic();
+  if (plaatkeuze == 6) big();
+  lichtwaarde = digitalRead(knoplicht);
+  if (lichtwaarde == HIGH) lichtaan();
+  delay(1);
+
+}
+
+
+void lichtaan(){
+  if (licht == HIGH){
+    licht = LOW;
+    analogWrite(ledpin, 0);
+  }
+  else{
+    licht = HIGH;
+     analogWrite(ledpin, lichtsterkte);
+  }
+ 
+  delay(knoptijd);
+}
+
+void setmillidays(){
+  milliuur = hour() * 41.6667;
+  milliminuut = minute() * 0.6944;
+  if (oudeseconde == second()){
+      milli = millis() - tijd;
+  millitijd = milli * 0.0000116;
+
+}
+  else{
+  millitijd = 0;
+  milli = millis() - tijd;
+    tijd = millis();
+}
+ 
+   oudeseconde = second();
+  milliseconde = oudeseconde * 0.0116;
+ 
+
+millidays = milliuur + milliminuut + milliseconde + millitijd;
+
+}
+
+
+void setklok(){                              //setting the clock
+     display.clearDisplay();   // clears the screen and buffer
+     display.println("v time");
+     display.println("  install");                        //setting the hours
+     display.println("");
+     display.print(" hour: ");
+     display.setTextSize(2);
+     display.println(uur);
+     display.setTextSize(1);
+     display.print("+ ");
+     display.display();
+     delay(knoptijd);
+     lichtwaarde = digitalRead(knoplicht);
+     while (lichtwaarde == LOW){
+       delay(knoptijd);
+       menuwaarde = digitalRead(knopmenu);
+       if (menuwaarde == HIGH){
+         uur++;
+         if (uur > 24) uur = 1;
+     display.clearDisplay();   // clears the screen and buffer
+      display.println("v time");
+     display.println("  install");                        //setting the hours
+     display.println("");
+     display.print(" hour: ");
+     display.setTextSize(2);
+     display.println(uur);
+     display.setTextSize(1);
+     display.print("+ ");
+     display.display();
+       }
+       lichtwaarde = digitalRead(knoplicht);
+     }
+     display.clearDisplay();   // clears the screen and buffer
+      display.println("v time");
+     display.println("  install");                        //setting the minutes
+     display.println("");
+     display.print("  min.: ");
+     display.setTextSize(2);
+     display.println(minuut);
+     display.setTextSize(1);
+     display.print("+ ");
+     display.display();
+     delay(knoptijd);
+     lichtwaarde = digitalRead(knoplicht);
+     while (lichtwaarde == LOW){
+       delay(knoptijd);
+       menuwaarde = digitalRead(knopmenu);
+       if (menuwaarde == HIGH){
+         minuut++;
+         if (minuut > 59) minuut = 0;
+     display.clearDisplay();   // clears the screen and buffer
+      display.println("v time");
+     display.println("  install");                        //setting the minutes
+     display.println("");
+     display.print("  min.: ");
+     display.setTextSize(2);
+     display.println(minuut);
+     display.setTextSize(1);
+     display.print("+ ");
+     display.display();
+       }
+       lichtwaarde = digitalRead(knoplicht);  
+     }
+    
+                                               //setting the month
+     display.clearDisplay();   // clears the screen and buffer
+      display.println("v date");
+     display.println("  install");                        //setting the month
+     display.println("");
+     display.print(" month:");
+     display.setTextSize(2);
+     display.println(maand);
+     display.setTextSize(1);
+     display.print("+ ");
+     display.display();
+     delay(knoptijd);
+     lichtwaarde = digitalRead(knoplicht);
+     while (lichtwaarde == LOW){
+       delay(knoptijd);
+       menuwaarde = digitalRead(knopmenu);
+       if (menuwaarde == HIGH){
+         maand++;
+         if (maand > 12) maand = 1;
+     display.clearDisplay();   // clears the screen and buffer
+      display.println("v date");
+     display.println("  install");                        //setting the month
+     display.println("");
+     display.print(" month:");
+     display.setTextSize(2);
+     display.println(maand);
+     display.setTextSize(1);
+     display.print("+ ");
+     display.display();
+       }
+       lichtwaarde = digitalRead(knoplicht);  
+     }
+    
+                                               //setting the day
+     display.clearDisplay();   // clears the screen and buffer
+       display.println("v date");
+     display.println("  install");                        //setting the day
+     display.println("");
+     display.print("  day: ");
+     display.setTextSize(2);
+     display.println(dag);
+     display.setTextSize(1);
+     display.print("+ ");
+     display.display();
+     delay(knoptijd);
+     lichtwaarde = digitalRead(knoplicht);
+     while (lichtwaarde == LOW){
+       delay(knoptijd);
+       menuwaarde = digitalRead(knopmenu);
+       if (menuwaarde == HIGH){
+         dag++;
+         if (maand == 1 || maand == 3 || maand == 5 || maand == 7 || maand == 8 || maand == 10 || maand == 12){
+           if (dag > 31) dag = 1;
+         }
+         if (maand == 4 || maand == 6 || maand == 9 || maand == 11){
+           if (dag > 30) dag = 1;
+         }
+         if (maand == 2){
+           if (dag > 28) dag = 1;
+         }
+     display.clearDisplay();   // clears the screen and buffer
+       display.println("v date");
+     display.println("  install");                        //setting the day
+     display.println("");
+     display.print("  day: ");
+     display.setTextSize(2);
+     display.println(dag);
+     display.setTextSize(1);
+     display.print("+ ");
+     display.display();
+     delay(knoptijd);
+       }
+       lichtwaarde = digitalRead(knoplicht);  
+     }
+      // year    
+     display.clearDisplay();   // clears the screen and buffer
+       display.println("v date");
+     display.println("  install");                        //setting the year
+     display.println("");
+     display.print("  year");
+     display.setTextSize(2);
+     display.print(jaar);
+     display.setTextSize(1);
+     display.print("+ ");
+     display.display();
+     delay(knoptijd);
+     lichtwaarde = digitalRead(knoplicht);
+     while (lichtwaarde == LOW){
+       delay(knoptijd);
+       menuwaarde = digitalRead(knopmenu);
+       if (menuwaarde == HIGH){
+         jaar++;
+
+           if (jaar > 2100) jaar = 2013;
+
+     display.clearDisplay();   // clears the screen and buffer
+       display.println("v date");
+     display.println("  install");                        //setting the year
+     display.println("");
+     display.print("  year");
+     display.setTextSize(2);
+     display.print(jaar);
+     display.setTextSize(1);
+     display.print("+ ");
+     display.display();
+     delay(knoptijd);
+       }
+       lichtwaarde = digitalRead(knoplicht);  
+     }
+      
+   setTime(uur,minuut,seconde,dag,maand,jaar);
+   delay(knoptijd);
+   display.clearDisplay();
+   loop();
+}
+
+
+void printDigits(int digits){
+  // utility function for digital clock display: prints preceding colon and leading 0
+
+  if(digits < 10)
+    display.print('0');
+  display.print(digits);
+}
+
+void lichtinstellen(){
+display.clearDisplay();
+display.println("> mode:");
+display.println("");
+display.setTextSize(2);
+display.print(" ");
+display.println(lichtsterkte/10);
+display.setTextSize(1);
+display.println("");
+display.print("+ 1----->25");
+display.display();
+delay(knoptijd);
+lichtwaarde = LOW;
+
+  while(lichtwaarde == LOW){
+    display.clearDisplay();
+    display.println("> mode:");
+    display.println("");
+    display.setTextSize(2);
+    display.print(" ");
+    display.println(lichtsterkte/10);
+    display.setTextSize(1);
+    display.println("");
+    display.print("+ 1----->25");
+    display.display();
+    analogWrite(ledpin, lichtsterkte);
+        delay(knoptijd);
+       menuwaarde = digitalRead(knopmenu);
+       lichtwaarde = digitalRead(knoplicht);
+       if (menuwaarde == HIGH){
+         lichtsterkte = lichtsterkte + 10;
+         if (lichtsterkte == 260) lichtsterkte = 10;
+         analogWrite(ledpin, lichtsterkte);
+
+       }
+      
+  }
+  loop();
+}
+
+void contrast(){
+display.clearDisplay();
+display.println("> Contrast:");
+display.println("");
+display.setTextSize(2);
+display.print(" ");
+display.println(schermcontrast);
+display.setTextSize(1);
+display.println("");
+display.print("+ 45%->95%");
+display.display();
+delay(knoptijd);
+lichtwaarde = LOW;
+
+  while(lichtwaarde == LOW){
+    display.clearDisplay();
+    display.println("> Contrast:");
+    display.println("");
+    display.setTextSize(2);
+    display.print(" ");
+    display.println(schermcontrast);
+    display.setTextSize(1);
+    display.println("");
+    display.print("+ 45%->95%");
+    display.display();
+   
+        delay(knoptijd);
+       menuwaarde = digitalRead(knopmenu);
+       lichtwaarde = digitalRead(knoplicht);
+       if (menuwaarde == HIGH){
+         schermcontrast = schermcontrast + 1;
+         if (schermcontrast == 95) schermcontrast = 45;
+         display.setContrast(schermcontrast);
+
+       }
+      
+  }
+  loop();
+}
+
+void temper(){
+   tempC = analogRead(tempPin);           //read the value from the sensor
+tempC = (5.0 * tempC * 100.0)/1024.0; 
+  delay(300);
+tempteller++;
+if (tempteller == 1000){
+  digitalWrite(temppin, HIGH);
+  delay(200);
+    tempsensor = analogRead(1)* 0.4882812;
+  temperatuur = tempsensor - 273.15 - 31.4;  //33 is de correctie doe nodig was voor mijn sensor
+  digitalWrite(temppin, LOW);
+  tempteller = 0;
+  if (temperatuur > 99 || temperatuur < -99) temperatuur = 99;
+}
+}
+
+void menu(){
+  display.setTextSize(1);
+  menuwaarde = LOW;
+  while (lichtwaarde == LOW && menuwaarde == LOW){
+  display.clearDisplay();
+  display.print("< ");
+  display.setTextColor(WHITE, BLACK);
+  display.println("clock inst.");
+  display.setTextColor(BLACK);
+  display.println("  mode");
+  display.println("  light");
+  display.println("  contrast");
+  display.println("");
+  display.print("v back");
+  display.display();
+    delay(knoptijd);
+  
+  lichtwaarde = digitalRead(knoplicht);
+  menuwaarde = digitalRead(knopmenu);
+  }
+    if (lichtwaarde == HIGH) setklok();
+    if (menuwaarde == HIGH) menu2();
+}
+void menu2(){
+  menuwaarde = LOW;
+  while (lichtwaarde == LOW && menuwaarde == LOW){
+  display.clearDisplay();
+  display.print("< ");
+  display.setTextColor(WHITE, BLACK);
+  display.println("mode");
+  display.setTextColor(BLACK);
+  display.println("  light");
+  display.println("  contrast");
+  display.println("");
+  display.println("  back");
+  display.print("v clock inst.");
+  display.display();
+    delay(knoptijd);
+  
+  lichtwaarde = digitalRead(knoplicht);
+  menuwaarde = digitalRead(knopmenu);
+  }
+    if (lichtwaarde == HIGH) wijzerplaat();
+    if (menuwaarde == HIGH) menu3();
+}
+void menu3(){
+  menuwaarde = LOW;
+  while (lichtwaarde == LOW && menuwaarde == LOW){
+  display.clearDisplay();
+  display.print("< ");
+  display.setTextColor(WHITE, BLACK);
+  display.println("light");
+  display.setTextColor(BLACK);
+  display.println("  contrast");
+  display.println("");
+  display.println("  back");
+  display.println("  clock inst.");
+  display.print("v mode");
+  display.display();
+    delay(knoptijd);
+  
+  lichtwaarde = digitalRead(knoplicht);
+  menuwaarde = digitalRead(knopmenu);
+  }
+    if (lichtwaarde == HIGH) lichtinstellen();
+    if (menuwaarde == HIGH) menu4();
+}
+void menu4(){
+  menuwaarde = LOW;
+  while (lichtwaarde == LOW && menuwaarde == LOW){
+  display.clearDisplay();
+  display.print("< ");
+  display.setTextColor(WHITE, BLACK);
+  display.println("contrast");
+  display.setTextColor(BLACK);
+  display.println("");
+  display.println("  back");
+  display.println("  clock inst.");
+  display.println("  mode");
+  display.print("v light");
+  display.display();
+    delay(knoptijd);
+  
+  lichtwaarde = digitalRead(knoplicht);
+  menuwaarde = digitalRead(knopmenu);
+  }
+    if (lichtwaarde == HIGH) contrast();
+    if (menuwaarde == HIGH) menu5();
+}
+void menu5(){
+  menuwaarde = LOW;
+  while (lichtwaarde == LOW && menuwaarde == LOW){
+  display.clearDisplay();
+  display.print("< ");
+  display.setTextColor(WHITE, BLACK);
+  display.println("");
+  display.setTextColor(BLACK);
+  display.println("  back");
+  display.println("  clock inst.");
+  display.println("  mode");
+  display.println("  light");
+  display.print("v contrast");
+  display.display();
+    delay(knoptijd);
+  
+  lichtwaarde = digitalRead(knoplicht);
+  menuwaarde = digitalRead(knopmenu);
+  }
+//    if (lichtwaarde == HIGH) nogOnbekend();
+    if (menuwaarde == HIGH) menu6();
+}
+void menu6(){
+  menuwaarde = LOW;
+  while (lichtwaarde == LOW && menuwaarde == LOW){
+  display.clearDisplay();
+  display.print("< ");
+  display.setTextColor(WHITE, BLACK);
+  display.println("back");
+  display.setTextColor(BLACK);
+  display.println("  clock inst.");
+  display.println("  mode");
+  display.println("  light");
+  display.println("  contrast");
+  display.print("v");
+  display.display();
+    delay(knoptijd);
+  
+  lichtwaarde = digitalRead(knoplicht);
+  menuwaarde = digitalRead(knopmenu);
+  }
+    if (lichtwaarde == HIGH){delay(knoptijd); display.clearDisplay(); loop();}
+    if (menuwaarde == HIGH) menu();
+}
+
+
+void wijzerplaat(){
+lichtwaarde = LOW;
+menuwaarde = LOW;
+display.clearDisplay();
+  display.print("< ");
+  display.setTextColor(WHITE, BLACK);
+  display.println("millidays");
+  display.setTextColor(BLACK);
+  display.println("  cursors");
+  display.println("  stopwatch");
+  display.println("  binar");
+  display.println("  classic");
+  display.print("v big");
+  display.display();
+    delay(knoptijd);
+   
+  while (lichtwaarde == LOW && menuwaarde == LOW){
+  display.clearDisplay();
+  display.print("< ");
+  display.setTextColor(WHITE, BLACK);
+  display.println("millidays");
+  display.setTextColor(BLACK);
+  display.println("  cursors");
+  display.println("  stopwatch");
+  display.println("  binar");
+  display.println("  classic");
+  display.print("v big");
+  display.display();
+    delay(knoptijd);
+  
+  lichtwaarde = digitalRead(knoplicht);
+  menuwaarde = digitalRead(knopmenu);
+  }
+    if (lichtwaarde == HIGH) {
+      plaatkeuze = 1;
+      loop();
+    }
+    if (menuwaarde == HIGH) wijzerplaat2();
+}
+
+void wijzerplaat2(){
+menuwaarde = LOW;
+delay(knoptijd);
+  while (lichtwaarde == LOW && menuwaarde == LOW){
+  display.clearDisplay();
+  display.print("< ");
+  display.setTextColor(WHITE, BLACK);
+  display.println("cursors");
+  display.setTextColor(BLACK);
+  display.println("  stopwatch");
+  display.println("  binar");
+  display.println("  classic");
+  display.println("  big");
+  display.print("v millidays");
+  display.display();
+    delay(knoptijd);
+  
+  lichtwaarde = digitalRead(knoplicht);
+  menuwaarde = digitalRead(knopmenu);
+  }
+    if (lichtwaarde == HIGH) {
+      plaatkeuze = 2;
+//     minoud = 61;
+         display.clearDisplay();
+      loop();
+    }
+    if (menuwaarde == HIGH) wijzerplaat3();
+}
+
+void wijzerplaat3(){
+menuwaarde = LOW;
+delay(knoptijd);
+  while (lichtwaarde == LOW && menuwaarde == LOW){
+  display.clearDisplay();
+  display.print("< ");
+  display.setTextColor(WHITE, BLACK);
+  display.println("stopwatch");
+  display.setTextColor(BLACK);
+  display.println("  binar");
+  display.println("  classic");
+  display.println("  big");
+  display.println("  millidays");
+  display.print("v cursors");
+  display.display();
+    delay(knoptijd);
+  
+  lichtwaarde = digitalRead(knoplicht);
+  menuwaarde = digitalRead(knopmenu);
+  }
+    if (lichtwaarde == HIGH) {
+      plaatkeuze = 3;
+      loop();
+    }
+    if (menuwaarde == HIGH) wijzerplaat4();
+}
+
+void wijzerplaat4(){
+menuwaarde = LOW;
+delay(knoptijd);
+  while (lichtwaarde == LOW && menuwaarde == LOW){
+  display.clearDisplay();
+  display.print("< ");
+  display.setTextColor(WHITE, BLACK);
+  display.println("binar");
+  display.setTextColor(BLACK);
+  display.println("  classic");
+  display.println("  big");
+  display.println("  millidays");
+  display.println("  cursors");
+  display.print("v stopwatch");
+  display.display();
+    delay(knoptijd);
+  
+  lichtwaarde = digitalRead(knoplicht);
+  menuwaarde = digitalRead(knopmenu);
+  }
+    if (lichtwaarde == HIGH) {
+      plaatkeuze = 4;
+      loop();
+    }
+    if (menuwaarde == HIGH) wijzerplaat5();
+}
+
+void wijzerplaat5(){
+menuwaarde = LOW;
+delay(knoptijd);
+  while (lichtwaarde == LOW && menuwaarde == LOW){
+  display.clearDisplay();
+  display.print("< ");
+  display.setTextColor(WHITE, BLACK);
+  display.println("classic");
+  display.setTextColor(BLACK);
+  display.println("  big");
+  display.println("  millidays");
+  display.println("  cursors");
+  display.println("  stopwatch");
+  display.print("v binar");
+  display.display();
+    delay(knoptijd);
+  
+  lichtwaarde = digitalRead(knoplicht);
+  menuwaarde = digitalRead(knopmenu);
+  }
+    if (lichtwaarde == HIGH) {
+      plaatkeuze = 5;
+//     minoud = 61;
+         display.clearDisplay();
+      loop();
+    }
+    if (menuwaarde == HIGH) wijzerplaat6();
+}
+
+void wijzerplaat6(){
+menuwaarde = LOW;
+delay(knoptijd);
+  while (lichtwaarde == LOW && menuwaarde == LOW){
+  display.clearDisplay();
+  display.print("< ");
+  display.setTextColor(WHITE, BLACK);
+  display.println("big");
+  display.setTextColor(BLACK);
+  display.println("  millidays");
+  display.println("  cursors");
+  display.println("  stopwatch");
+  display.println("  binar");
+  display.print("v classic");
+  display.display();
+    delay(knoptijd);
+  
+  lichtwaarde = digitalRead(knoplicht);
+  menuwaarde = digitalRead(knopmenu);
+  }
+    if (lichtwaarde == HIGH) {
+      plaatkeuze = 6;
+      loop();
+    }
+    if (menuwaarde == HIGH) wijzerplaat();
+}
+
+void binair(){
+  display.clearDisplay();
+  display.setTextColor(WHITE, BLACK); // 'inverted' text 
+  display.print(" 1 2 4 8 ");
+  display.setTextColor(BLACK);
+    display.print(" ");
+  display.println(second());
+ 
+  int b1 = 0;
+  int b2 = 0;
+  int b3 = 0;
+  int b4 = 0;
+ 
+       int x = hour();
+       if (x > 12) x = x - 12;
+    if(x-8 >= 0){b4=1; x = x -8;}
+    if(x-4 >= 0){b3=1; x = x -4;} 
+    if(x-2 >= 0){b2=1; x = x -2;} 
+    if(x == 1){b1=1;}     
+    display.print(" ");
+    display.print(b1);
+    display.print(" ");
+    display.print(b2);
+    display.print(" ");
+    display.print(b3);
+    display.print(" ");
+    display.println(b4);
+
+  display.setTextColor(WHITE, BLACK); // 'inverted' text 
+  display.println("         1 3 ");
+  display.println(" 1 2 4 8 6 2 ");
+  display.setTextColor(BLACK);
+  b1 = 0;
+  b2 = 0;
+  b3 = 0;
+  b4 = 0;
+  int b5 = 0;
+  int b6 = 0;
+
+     x = minute();
+    if(x-32 >= 0){b6=1; x = x - 32;}   
+    if(x-16 >= 0){b5=1; x = x - 16;}
+    if(x-8 >= 0){b4=1; x = x -8;}
+    if(x-4 >= 0){b3=1; x = x -4;} 
+    if(x-2 >= 0){b2=1; x = x -2;} 
+    if(x == 1){b1=1;}     
+    display.print(" ");
+    display.print(b1);
+    display.print(" ");
+    display.print(b2);
+    display.print(" ");
+    display.print(b3);
+    display.print(" ");
+    display.print(b4);
+    display.print(" ");
+    display.print(b5);
+    display.print(" ");
+    display.print(b6);
+
+  display.display();
+}
+
+void stopwatch(){
+
+  delay(knoptijd);
+  long tellermini = 0;
+  long tellersec = 0;
+  long tellermin = 0;
+  long tellernu = 0;
+  while (tellerStart == 0){
+    lichtwaarde = digitalRead(knoplicht);
+    menuwaarde = digitalRead(knopmenu);
+    if (menuwaarde == HIGH) menu();
+    if (lichtwaarde == HIGH) {
+        tellerStart = 1;
+        teller = millis();
+      }
+     display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(BLACK);
+  display.println("< start");
+  display.setTextSize(2);
+  display.print("00:00");
+  display.setTextSize(1);
+  display.println("00");
+  display.println();
+  display.println("  lap:");
+  display.print("  "); 
+  display.println("--:--");
+  display.print("< menu");
+  display.display();   
+  }
+   
+    while (tellerStart == 1){
+      if (millis() - teller > 250){
+      lichtwaarde = digitalRead(knoplicht);
+      menuwaarde = digitalRead(knopmenu);
+      if (lichtwaarde == HIGH) {
+        tellerStart = 2;
+      }
+      }
+      tellernu = millis() - teller;
+      for (int i = 0; i < 100; i++){
+        if (tellernu > i * 60000) tellermin = i;}
+        tellernu = tellernu - (tellermin * 60000);
+        for (int j = 0; j < 60; j++){
+          if (tellernu > j * 1000) tellersec = j;}
+          tellernu = tellernu - (tellersec * 1000);
+          for (int k = 0; k < 100; k++){
+            if (tellernu > k * 100) tellermini = k;}
+           
+        display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(BLACK);
+  display.println("< stop");
+  display.setTextSize(2);
+printDigits(tellermin);
+  display.print(":");
+  printDigits(tellersec);
+  display.setTextSize(1);
+display.print(tellermini);
+  display.println();
+  display.println();
+  display.println("  lap:");
+  display.print("  "); 
+  display.println("--:--");
+  display.print("< laptimes");
+  display.display();
+    }
+ 
+      while (tellerStart == 2){
+        delay(knoptijd);
+      lichtwaarde = digitalRead(knoplicht);
+      menuwaarde = digitalRead(knopmenu);
+      if (lichtwaarde == HIGH) {
+        tellerStart = 0;
+      }
+      if (menuwaarde == HIGH) menu();
+        display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(BLACK);
+  display.println("< reset");
+  display.setTextSize(2);
+printDigits(tellermin);
+  display.print(":");
+  printDigits(tellersec);
+  display.setTextSize(1);
+display.print(tellermini);
+  display.println();
+  display.println();
+  display.println("  lap:");
+  display.print("  "); 
+  display.println("--:--");
+  display.print("< menu");
+  display.display();
+    }
+ 
+}
+
+void digitalClockDisplay(){          //printing time and date
+
+  display.clearDisplay();
+
+  display.setTextSize(1);
+  display.setTextColor(BLACK);
+  display.setCursor(0,0);
+  display.print("M/days");
+  if (temperatuur >= 0) display.print(" ");
+  if (temperatuur < 10 && temperatuur > 0) display.print(" ");
+  display.print(tempC);
+  display.write(247);
+  display.print("C");
+
+  display.setTextSize(2);
+  display.setTextColor(BLACK);
+  display.println(millidays);
+
+  display.setTextSize(1);
+  display.setTextColor(BLACK);
+    display.print(day());
+  display.print("/");
+  display.print(month());
+  display.print("/");
+  display.println(year());
+
+    display.setTextSize(2);
+  display.setTextColor(BLACK);
+  display.print(hour());
+    display.print(":");
+    printDigits(minute());
+       display.setTextSize(1);
+  display.print(":");
+    printDigits(second());
+  display.println();
+  display.display();
+}
+
+void wijzerpl(){
+  kleur = BLACK;
+  kleurwis = WHITE;
+  breed = 42;
+  display.drawCircle(breed, 24, 23, kleur);
+
+  display.drawLine(breed, 2, breed, 3, kleur);
+  display.drawLine(breed-22, 24, breed-21, 24, kleur);
+  display.drawLine(breed, 46, breed, 45, kleur);
+  display.drawLine(breed+22, 24, breed+21, 24, kleur);
+  display.display();
+  wijzer();
+}
+
+void classic(){
+  kleur = BLACK;
+  kleurwis = WHITE;
+  breed = 42;
+  display.setCursor(0,0);
+   display.println("      XII");
+   display.println();
+   display.print(" IX        III");
+   display.println();
+   display.println();
+   display.print("      VI");
+   display.display();
+   wijzer();
+  }
+ 
+void wijzer(){
+      if (millis() - tussentijd > 5000){ // wait inbetween refreshing
+      tussentijd = millis();
+     
+  // deleting the old hands
+    display.fillCircle(breed, 24, 19, kleurwis);
+
+    // placing the minute hand
+    for (int i = 0; i < 30; i++){
+      if (minute() == i) display.drawLine(breed, 24, breed+breedMinWijzer[i], hoogMinWijzer[i], kleur);
+      if (minute() == i+30) display.drawLine(breed, 24, breed-breedMinWijzer[i], hoogMinWijzer[i+30], kleur);
+    }
+
+// placing the hour hand
+for (int i = 0; i < 6; i++){
+   if (hour() == i || hour() == i+12){
+     if (minute() < 10){ display.drawLine(breed, 24, breed+breedUurWijzer[i], hoogUurWijzer[i], kleur);}
+else{if (minute() < 20){ display.drawLine(breed, 24, breed+breedUurWijzer[i+6], hoogUurWijzer[i+6], kleur);}
+else{if (minute() < 30){ display.drawLine(breed, 24, breed+breedUurWijzer[i+12], hoogUurWijzer[i+12], kleur);}
+else{if (minute() < 40){ display.drawLine(breed, 24, breed+breedUurWijzer[i+18], hoogUurWijzer[i+18], kleur);}
+else{if (minute() < 50){ display.drawLine(breed, 24, breed+breedUurWijzer[i+24], hoogUurWijzer[i+24], kleur);}
+else{ display.drawLine(breed, 24, breed+breedUurWijzer[i+30], hoogUurWijzer[i+30], kleur);}
+
+  }}}}}
+   if (hour() == i+6 || hour() == i+18){
+     if (minute() < 10){ display.drawLine(breed, 24, breed-breedUurWijzer[i], hoogUurWijzer[i+36], kleur);}
+else{if (minute() < 20){ display.drawLine(breed, 24, breed-breedUurWijzer[i+6], hoogUurWijzer[i+42], kleur);}
+else{if (minute() < 30){ display.drawLine(breed, 24, breed-breedUurWijzer[i+12], hoogUurWijzer[i+48], kleur);}
+else{if (minute() < 40){ display.drawLine(breed, 24, breed-breedUurWijzer[i+18], hoogUurWijzer[i+54], kleur);}
+else{if (minute() < 50){ display.drawLine(breed, 24, breed-breedUurWijzer[i+24], hoogUurWijzer[i+60], kleur);}
+else{ display.drawLine(breed, 24, breed-breedUurWijzer[i+30], hoogUurWijzer[i+66], kleur);}
+
+  }}}}}
+}
+    }
+        display.display();
+}
+
+void big(){
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(BLACK);
+  display.println();
+  display.setTextSize(3);
+  display.print(hour());
+  display.setTextSize(2);
+    display.print(":");
+  display.setTextSize(3);
+  printDigits(minute());
+  display.display();
+}
